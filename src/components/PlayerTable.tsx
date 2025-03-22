@@ -12,7 +12,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { motion } from "framer-motion";
-import { Trash2, Filter } from "lucide-react";
+import { Trash2, Filter, Download, UserRoundX } from "lucide-react";
 
 interface PlayerTableProps {
   players: Player[];
@@ -46,6 +46,43 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
     return value !== null && value !== undefined ? value : "—";
   };
   
+  // Export player data to CSV
+  const exportToCSV = () => {
+    if (players.length === 0) return;
+    
+    const headers = ['Name', 'Team', 'Role', 'Status', 'Batting Avg', 'Strike Rate', 'Economy', 'Wickets', 'Catches', 'Score'];
+    
+    // Format the player data into rows
+    const rows = playersWithScores.map(player => [
+      player.name,
+      player.team,
+      player.role,
+      player.overseas === "Yes" ? "Overseas" : "Domestic",
+      player.battingAverage.toFixed(2),
+      player.strikeRate.toFixed(2),
+      player.bowlingEconomy ? player.bowlingEconomy.toFixed(2) : '—',
+      player.wickets ? player.wickets : '—',
+      player.catches,
+      player.compositeScore?.toFixed(2)
+    ]);
+    
+    // Join headers and rows into CSV format
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${players[0]?.team || 'team'}_players.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   return (
     <motion.div 
       className="subtle-card p-6"
@@ -56,7 +93,23 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 className="text-2xl font-semibold">Player Database ({players.length})</h2>
         
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+        <div className="flex items-center gap-2">
+          {players.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportToCSV}
+              className="flex items-center gap-1"
+            >
+              <Download size={14} />
+              Export
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto pb-2 md:pb-0 w-full mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <Button 
             variant={filter === "all" ? "default" : "outline"} 
             size="sm" 
@@ -115,7 +168,7 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Filter size={32} className="mx-auto mb-4 opacity-40" />
+          <UserRoundX size={32} className="mx-auto mb-4 opacity-40" />
           <p>No players added yet. Add your first player above.</p>
         </motion.div>
       ) : (
@@ -124,7 +177,6 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Team</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Batting Avg</TableHead>
@@ -140,7 +192,6 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
               {sortedPlayers.map((player) => (
                 <TableRow key={player.id} className="animate-fade-in">
                   <TableCell className="font-medium">{player.name}</TableCell>
-                  <TableCell>{player.team}</TableCell>
                   <TableCell>
                     <span className={`role-badge ${getRoleColor(player.role)}`}>
                       {player.role}

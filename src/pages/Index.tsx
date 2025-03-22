@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import TeamList from "../components/TeamList";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Settings, Trophy, TrendingUp } from "lucide-react";
 
@@ -13,7 +14,7 @@ const Index = () => {
       
       <main className="flex-grow container mx-auto px-4 mb-8">
         <motion.div 
-          className="max-w-4xl mx-auto"
+          className="max-w-6xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -38,30 +39,12 @@ const Index = () => {
           </div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+            className="mb-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            <Link to="/team-management" className="block">
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow p-8 h-full flex flex-col items-center text-center">
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full mb-4">
-                  <Plus className="h-8 w-8 text-cricket-blue" />
-                </div>
-                <h2 className="text-2xl font-semibold mb-3 text-slate-800 dark:text-white">Create a New Team</h2>
-                <p className="text-slate-600 dark:text-slate-300 mb-6">Start building your cricket team from scratch and optimize your playing XI.</p>
-                <Button className="mt-auto bg-cricket-blue hover:bg-blue-700">Get Started</Button>
-              </div>
-            </Link>
-            
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8 h-full flex flex-col items-center text-center">
-              <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full mb-4">
-                <TrendingUp className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h2 className="text-2xl font-semibold mb-3 text-slate-800 dark:text-white">Analytics Overview</h2>
-              <p className="text-slate-600 dark:text-slate-300 mb-6">Gain insights into team performance, player statistics, and optimization recommendations.</p>
-              <Button variant="outline" className="mt-auto" disabled>Coming Soon</Button>
-            </div>
+            <TeamList />
           </motion.div>
           
           <motion.div 
@@ -96,19 +79,6 @@ const Index = () => {
                 <p className="text-slate-600 dark:text-slate-300 text-sm">Get the optimal team combination for the best possible match results.</p>
               </div>
             </div>
-          </motion.div>
-          
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
-          >
-            <Link to="/team-management">
-              <Button size="lg" className="bg-cricket-blue hover:bg-blue-700">
-                Start Creating Your Team Now
-              </Button>
-            </Link>
           </motion.div>
         </motion.div>
       </main>

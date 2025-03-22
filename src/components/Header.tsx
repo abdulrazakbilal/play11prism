@@ -22,7 +22,7 @@ const Header = () => {
               <img 
                 src="/lovable-uploads/6fe60d0a-5cfc-4f6e-a8e0-84241bfce6c1.png" 
                 alt="Play11 Prism Logo" 
-                className="h-32 mb-2"
+                className="h-32 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
               />
             </motion.div>
           </Link>
