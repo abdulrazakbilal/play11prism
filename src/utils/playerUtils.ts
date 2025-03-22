@@ -47,6 +47,7 @@ export const samplePlayers: Player[] = [
   {
     id: 1,
     name: "Virat Kohli",
+    team: "Royal Challengers Bangalore",
     role: "Batsman",
     overseas: "No",
     battingAverage: 38.2,
@@ -58,6 +59,7 @@ export const samplePlayers: Player[] = [
   {
     id: 2,
     name: "Jasprit Bumrah",
+    team: "Mumbai Indians",
     role: "Bowler",
     overseas: "No",
     battingAverage: 8.2,
@@ -69,6 +71,7 @@ export const samplePlayers: Player[] = [
   {
     id: 3, 
     name: "Jos Buttler",
+    team: "Rajasthan Royals",
     role: "Wicket-Keeper",
     overseas: "Yes",
     battingAverage: 34.1,
@@ -80,6 +83,7 @@ export const samplePlayers: Player[] = [
   {
     id: 4,
     name: "Andre Russell",
+    team: "Kolkata Knight Riders",
     role: "All-Rounder",
     overseas: "Yes",
     battingAverage: 25.3,
@@ -91,6 +95,7 @@ export const samplePlayers: Player[] = [
   {
     id: 5,
     name: "Quinton de Kock",
+    team: "Lucknow Super Giants",
     role: "Wicket-Keeper",
     overseas: "Yes",
     battingAverage: 31.5,

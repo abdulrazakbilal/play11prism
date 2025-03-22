@@ -131,9 +131,13 @@ export const optimizeLineup = (players: Player[]): OptimizationResult => {
     (sum, player) => sum + (player.compositeScore || 0),
     0
   );
+
+  // Get the team name from the first player (assuming all players are from the same team)
+  const teamName = selectedPlayers.length > 0 ? selectedPlayers[0].team : "";
   
   return {
     selectedPlayers,
-    totalScore: parseFloat(totalScore.toFixed(2))
+    totalScore: parseFloat(totalScore.toFixed(2)),
+    teamName
   };
 };
