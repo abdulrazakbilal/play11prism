@@ -1,156 +1,142 @@
-
 import { Player } from "../types/Player";
-import { calculateCompositeScore, getRoleColor } from "../utils/playerUtils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { getRoleColor } from "../utils/playerUtils";
+import { CircleDollarSign, Award, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import { Wand2, Users } from "lucide-react";
 
 interface OptimizedTeamProps {
   selectedPlayers: Player[];
   totalScore: number;
+  teamName: string;
 }
 
-const OptimizedTeam = ({ selectedPlayers, totalScore }: OptimizedTeamProps) => {
-  // Count player types
+const OptimizedTeam = ({ selectedPlayers, totalScore, teamName }: OptimizedTeamProps) => {
+  // Group players by role
+  const batsmen = selectedPlayers.filter(p => p.role === "Batsman");
+  const bowlers = selectedPlayers.filter(p => p.role === "Bowler");
+  const allRounders = selectedPlayers.filter(p => p.role === "All-Rounder");
+  const wicketKeepers = selectedPlayers.filter(p => p.role === "Wicket-Keeper");
+  
+  // Count overseas players
   const overseasCount = selectedPlayers.filter(p => p.overseas === "Yes").length;
-  const batsmanCount = selectedPlayers.filter(p => p.role === "Batsman").length;
-  const bowlerCount = selectedPlayers.filter(p => p.role === "Bowler").length;
-  const allRounderCount = selectedPlayers.filter(p => p.role === "All-Rounder").length;
-  const wicketKeeperCount = selectedPlayers.filter(p => p.role === "Wicket-Keeper").length;
-  
-  // Get team name from the first player (all players in the optimized team should be from the same team)
-  const teamName = selectedPlayers.length > 0 ? selectedPlayers[0].team : "";
-  
-  // Sort players by role for display
-  const sortedPlayers = [...selectedPlayers].sort((a, b) => {
-    const roleOrder = {
-      "Wicket-Keeper": 1,
-      "Batsman": 2,
-      "All-Rounder": 3,
-      "Bowler": 4
-    };
-    
-    return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
-  });
   
   return (
     <motion.div 
-      className="glass-card p-6"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
+      className="sticky top-4 subtle-card p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          <span className="bg-primary/10 p-1.5 rounded-full">
-            <Wand2 size={18} className="text-primary" />
-          </span>
-          Optimized Playing XI
-        </h2>
-        
-        {selectedPlayers.length > 0 && (
-          <div className="text-xl font-semibold text-cricket-blue">
-            Score: {totalScore.toFixed(2)}
-          </div>
-        )}
-      </div>
+      <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+        <span className="bg-primary/10 p-1.5 rounded-full">
+          <Award size={18} className="text-primary" />
+        </span>
+        Optimized XI
+      </h2>
       
-      {selectedPlayers.length === 0 ? (
-        <motion.div 
-          className="text-center py-16 text-slate-500 dark:text-slate-400"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Users size={42} className="mx-auto mb-4 opacity-40" />
-          <p className="mb-2">Add players to generate your optimized XI</p>
-          <p className="text-sm">You need a minimum of 11 players with the right balance</p>
-        </motion.div>
-      ) : (
-        <div>
-          {teamName && (
-            <div className="mb-4 text-xl font-semibold text-center bg-cricket-blue/10 py-2 rounded-lg">
-              {teamName}
+      {teamName && (
+        <div className="mb-4 text-lg font-medium text-cricket-blue">
+          {teamName}
+        </div>
+      )}
+      
+      {selectedPlayers.length > 0 ? (
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-1.5">
+              <TrendingUp size={16} className="text-green-500" />
+              <span className="text-sm font-semibold">Total Score: <span className="text-green-500">{totalScore.toFixed(2)}</span></span>
             </div>
-          )}
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
-              <div className="text-sm text-slate-600 dark:text-slate-400">Batsmen</div>
-              <div className="text-xl font-semibold">{batsmanCount}</div>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
-              <div className="text-sm text-slate-600 dark:text-slate-400">Bowlers</div>
-              <div className="text-xl font-semibold">{bowlerCount}</div>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
-              <div className="text-sm text-slate-600 dark:text-slate-400">All-Rounders</div>
-              <div className="text-xl font-semibold">{allRounderCount}</div>
-            </div>
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
-              <div className="text-sm text-slate-600 dark:text-slate-400">Overseas</div>
-              <div className="text-xl font-semibold">{overseasCount} / 4</div>
+            <div className="flex items-center gap-1.5">
+              <CircleDollarSign size={16} className="text-amber-500" />
+              <span className="text-sm font-semibold">Overseas: <span className="text-amber-500">{overseasCount}/4</span></span>
             </div>
           </div>
           
-          <ScrollArea className="h-[420px] pr-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedPlayers.map((player, index) => (
-                <motion.div 
-                  key={player.id}
-                  className="player-card"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * index }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <span className={`role-badge ${getRoleColor(player.role)} mb-1`}>
-                        {player.role}
-                      </span>
+          <div className="space-y-6">
+            {/* Wicket Keepers */}
+            {wicketKeepers.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-2 text-gray-600 dark:text-gray-400">Wicket-Keepers ({wicketKeepers.length})</h3>
+                <ul className="space-y-1">
+                  {wicketKeepers.map(player => (
+                    <li key={player.id} className="flex justify-between items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <span className={`role-badge ${getRoleColor(player.role)}`}>{player.role.charAt(0)}</span>
+                        <span className="font-medium">{player.name}</span>
+                      </div>
                       {player.overseas === "Yes" && (
-                        <span className="role-badge overseas-badge ml-2">Overseas</span>
+                        <span className="role-badge overseas-badge text-xs px-1.5">OS</span>
                       )}
-                      <h3 className="text-lg font-semibold">{player.name}</h3>
-                    </div>
-                    <div className="player-score-pill">
-                      {calculateCompositeScore(player).toFixed(2)}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Batting Avg:</span>
-                      <span className="font-medium">{player.battingAverage.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Strike Rate:</span>
-                      <span className="font-medium">{player.strikeRate.toFixed(2)}</span>
-                    </div>
-                    
-                    {(player.role === "Bowler" || player.role === "All-Rounder") && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">Economy:</span>
-                          <span className="font-medium">{player.bowlingEconomy?.toFixed(2) || "—"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">Wickets:</span>
-                          <span className="font-medium">{player.wickets || "—"}</span>
-                        </div>
-                      </>
-                    )}
-                    
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Catches:</span>
-                      <span className="font-medium">{player.catches}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </ScrollArea>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Batsmen */}
+            {batsmen.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-2 text-gray-600 dark:text-gray-400">Batsmen ({batsmen.length})</h3>
+                <ul className="space-y-1">
+                  {batsmen.map(player => (
+                    <li key={player.id} className="flex justify-between items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <span className={`role-badge ${getRoleColor(player.role)}`}>{player.role.charAt(0)}</span>
+                        <span className="font-medium">{player.name}</span>
+                      </div>
+                      {player.overseas === "Yes" && (
+                        <span className="role-badge overseas-badge text-xs px-1.5">OS</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* All-Rounders */}
+            {allRounders.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-2 text-gray-600 dark:text-gray-400">All-Rounders ({allRounders.length})</h3>
+                <ul className="space-y-1">
+                  {allRounders.map(player => (
+                    <li key={player.id} className="flex justify-between items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <span className={`role-badge ${getRoleColor(player.role)}`}>{player.role.charAt(0)}</span>
+                        <span className="font-medium">{player.name}</span>
+                      </div>
+                      {player.overseas === "Yes" && (
+                        <span className="role-badge overseas-badge text-xs px-1.5">OS</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Bowlers */}
+            {bowlers.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-2 text-gray-600 dark:text-gray-400">Bowlers ({bowlers.length})</h3>
+                <ul className="space-y-1">
+                  {bowlers.map(player => (
+                    <li key={player.id} className="flex justify-between items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <span className={`role-badge ${getRoleColor(player.role)}`}>{player.role.charAt(0)}</span>
+                        <span className="font-medium">{player.name}</span>
+                      </div>
+                      {player.overseas === "Yes" && (
+                        <span className="role-badge overseas-badge text-xs px-1.5">OS</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+          <p>No team optimized yet. Add at least 11 players and click "Optimize Lineup".</p>
         </div>
       )}
     </motion.div>
