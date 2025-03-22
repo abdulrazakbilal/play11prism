@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
@@ -11,30 +12,20 @@ const Header = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-4"
-          >
-            <img 
-              src="/lovable-uploads/b7ebb4c6-6b05-423c-9722-fa8411a46168.png" 
-              alt="Play11 Prism Logo" 
-              className="h-24 mb-2"
-            />
-            <h1 className="text-4xl md:text-5xl font-display font-bold bg-gradient-to-r from-cricket-blue to-cricket-green bg-clip-text text-transparent pb-2">
-              Play11 Prism
-            </h1>
-          </motion.div>
-          
-          <motion.p 
-            className="text-slate-600 dark:text-slate-300 text-lg md:text-xl max-w-2xl leading-relaxed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            Cricket Analytics
-          </motion.p>
+          <Link to="/">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mb-4"
+            >
+              <img 
+                src="/lovable-uploads/6fe60d0a-5cfc-4f6e-a8e0-84241bfce6c1.png" 
+                alt="Play11 Prism Logo" 
+                className="h-32 mb-2"
+              />
+            </motion.div>
+          </Link>
         </div>
       </div>
     </motion.header>
