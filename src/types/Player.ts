@@ -6,6 +6,7 @@ export type OverseasStatus = "Yes" | "No";
 export interface Player {
   id: number;
   name: string;
+  team: string;
   role: PlayerRole;
   overseas: OverseasStatus;
   battingAverage: number;
@@ -19,4 +20,5 @@ export interface Player {
 export interface OptimizationResult {
   selectedPlayers: Player[];
   totalScore: number;
+  teamName: string;
 }

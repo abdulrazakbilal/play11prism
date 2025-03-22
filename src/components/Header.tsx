@@ -17,6 +17,11 @@ const Header = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mb-4"
           >
+            <img 
+              src="/lovable-uploads/b7ebb4c6-6b05-423c-9722-fa8411a46168.png" 
+              alt="Play11 Prism Logo" 
+              className="h-24 mb-2"
+            />
             <h1 className="text-4xl md:text-5xl font-display font-bold bg-gradient-to-r from-cricket-blue to-cricket-green bg-clip-text text-transparent pb-2">
               Play11 Prism
             </h1>
@@ -28,7 +33,7 @@ const Header = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            Optimized Cricket Lineups, Perfected.
+            Cricket Analytics
           </motion.p>
         </div>
       </div>

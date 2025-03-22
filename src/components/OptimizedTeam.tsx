@@ -19,6 +19,9 @@ const OptimizedTeam = ({ selectedPlayers, totalScore }: OptimizedTeamProps) => {
   const allRounderCount = selectedPlayers.filter(p => p.role === "All-Rounder").length;
   const wicketKeeperCount = selectedPlayers.filter(p => p.role === "Wicket-Keeper").length;
   
+  // Get team name from the first player (all players in the optimized team should be from the same team)
+  const teamName = selectedPlayers.length > 0 ? selectedPlayers[0].team : "";
+  
   // Sort players by role for display
   const sortedPlayers = [...selectedPlayers].sort((a, b) => {
     const roleOrder = {
@@ -48,7 +51,7 @@ const OptimizedTeam = ({ selectedPlayers, totalScore }: OptimizedTeamProps) => {
         
         {selectedPlayers.length > 0 && (
           <div className="text-xl font-semibold text-cricket-blue">
-            Score: {totalScore}
+            Score: {totalScore.toFixed(2)}
           </div>
         )}
       </div>
@@ -66,6 +69,12 @@ const OptimizedTeam = ({ selectedPlayers, totalScore }: OptimizedTeamProps) => {
         </motion.div>
       ) : (
         <div>
+          {teamName && (
+            <div className="mb-4 text-xl font-semibold text-center bg-cricket-blue/10 py-2 rounded-lg">
+              {teamName}
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
               <div className="text-sm text-slate-600 dark:text-slate-400">Batsmen</div>

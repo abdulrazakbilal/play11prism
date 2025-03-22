@@ -10,6 +10,10 @@ const Footer = () => {
             Created by Abdul Razak Bilal
           </p>
           
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Play11 Prism: Cricket Analytics
+          </div>
+          
           <a 
             href="https://www.linkedin.com/in/abdul-razak-bilal/" 
             target="_blank" 

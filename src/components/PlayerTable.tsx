@@ -124,6 +124,7 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Team</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Batting Avg</TableHead>
@@ -139,6 +140,7 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
               {sortedPlayers.map((player) => (
                 <TableRow key={player.id} className="animate-fade-in">
                   <TableCell className="font-medium">{player.name}</TableCell>
+                  <TableCell>{player.team}</TableCell>
                   <TableCell>
                     <span className={`role-badge ${getRoleColor(player.role)}`}>
                       {player.role}

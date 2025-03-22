@@ -16,6 +16,7 @@ interface PlayerFormProps {
 
 const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
   const [name, setName] = useState("");
+  const [team, setTeam] = useState("");
   const [role, setRole] = useState<PlayerRole>("Batsman");
   const [overseas, setOverseas] = useState<OverseasStatus>("No");
   const [battingAverage, setBattingAverage] = useState("");
@@ -26,6 +27,7 @@ const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
   
   const resetForm = () => {
     setName("");
+    // Don't reset team name to allow adding multiple players to the same team
     setRole("Batsman");
     setOverseas("No");
     setBattingAverage("");
@@ -43,6 +45,15 @@ const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
       toast({
         title: "Missing information",
         description: "Please enter player name",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!team) {
+      toast({
+        title: "Missing information",
+        description: "Please enter team name",
         variant: "destructive",
       });
       return;
@@ -70,6 +81,7 @@ const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
     const newPlayer: Player = {
       id: generateRandomId(),
       name,
+      team,
       role,
       overseas,
       battingAverage: parseFloat(battingAverage),
@@ -85,7 +97,7 @@ const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
     // Show success toast
     toast({
       title: "Player added",
-      description: `${name} has been added to the squad`,
+      description: `${name} has been added to ${team}`,
     });
     
     // Reset form
@@ -108,6 +120,18 @@ const PlayerForm = ({ onAddPlayer }: PlayerFormProps) => {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Team Name */}
+          <div className="space-y-2">
+            <Label htmlFor="team">Team Name</Label>
+            <Input
+              id="team"
+              value={team}
+              onChange={(e) => setTeam(e.target.value)}
+              placeholder="e.g. Mumbai Indians"
+              className="w-full"
+            />
+          </div>
+          
           {/* Player Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Player Name</Label>
