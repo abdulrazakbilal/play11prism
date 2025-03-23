@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTeam, Team, TeamFormat } from "../contexts/TeamContext";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Edit, Trash2, PlusCircle, Users, Calendar, Globe } from "lucide-react";
+import { Edit, Trash2, PlusCircle, Users, Calendar, Globe, Plane } from "lucide-react";
 import { motion } from "framer-motion";
 import TeamFormatSelector from "./TeamFormatSelector";
 
@@ -189,7 +188,7 @@ const TeamList = () => {
                     {team.name}
                     {team.format === "league" ? (
                       <span className="text-xs py-1 px-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full flex items-center gap-1">
-                        <Globe size={12} />
+                        <Plane size={12} />
                         League
                       </span>
                     ) : (
