@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTeam, Team, TeamFormat } from "../contexts/TeamContext";
@@ -17,6 +18,7 @@ const TeamList = () => {
   const [newTeamFormat, setNewTeamFormat] = useState<TeamFormat>("league");
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [editTeamName, setEditTeamName] = useState("");
+  const [editTeamFormat, setEditTeamFormat] = useState<TeamFormat>("league");
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
   const [showEditTeamDialog, setShowEditTeamDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -56,14 +58,19 @@ const TeamList = () => {
       return;
     }
     
-    updateTeam(editingTeam.id, { name: editTeamName });
+    updateTeam(editingTeam.id, { 
+      name: editTeamName,
+      format: editTeamFormat 
+    });
+    
     setEditingTeam(null);
     setEditTeamName("");
+    setEditTeamFormat("league");
     setShowEditTeamDialog(false);
     
     toast({
       title: "Team updated",
-      description: `Team has been renamed to "${editTeamName}".`,
+      description: `Team has been updated successfully.`,
     });
   };
 
@@ -93,6 +100,7 @@ const TeamList = () => {
   const openEditDialog = (team: Team) => {
     setEditingTeam(team);
     setEditTeamName(team.name);
+    setEditTeamFormat(team.format);
     setShowEditTeamDialog(true);
   };
   
@@ -251,6 +259,10 @@ const TeamList = () => {
                 }}
               />
             </div>
+            <TeamFormatSelector 
+              value={editTeamFormat} 
+              onChange={setEditTeamFormat} 
+            />
           </div>
           <DialogFooter>
             <DialogClose asChild>
