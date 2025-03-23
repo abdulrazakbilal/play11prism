@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Player, PlayerRole, OverseasStatus } from "../types/Player";
 import { useForm } from "react-hook-form";
@@ -18,45 +17,69 @@ interface PlayerFormProps {
   onCancelEdit?: () => void;
 }
 
-// Dynamic schema creation function based on role
-const createFormSchema = (role: PlayerRole) => {
-  const isBowler = role === "Bowler";
-  
-  return z.object({
+// Define the form schema dynamically based on the player role
+const createPlayerSchema = (role: PlayerRole) => {
+  const baseSchema = {
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),
     role: z.enum(["Batsman", "Bowler", "All-Rounder", "Wicket-Keeper"] as const),
     overseas: z.enum(["Yes", "No"] as const),
-    battingAverage: isBowler 
-      ? z.number().nullable().optional()
-      : z.number().min(0, { message: "Must be 0 or greater" }),
-    strikeRate: isBowler
-      ? z.number().nullable().optional()
-      : z.number().min(0, { message: "Must be 0 or greater" }),
+    catches: z.number().min(0, { message: "Must be 0 or greater" }),
+  };
+
+  // Optional bowling fields for Bowlers and All-Rounders
+  const bowlingFields = {
     bowlingEconomy: z.number().min(0, { message: "Must be 0 or greater" }).nullable(),
     wickets: z.number().min(0, { message: "Must be 0 or greater" }).nullable(),
-    catches: z.number().min(0, { message: "Must be 0 or greater" }),
+  };
+
+  // Batting fields mandatory for all except Bowlers
+  const battingFields = role === "Bowler"
+    ? {
+        battingAverage: z.number().min(0, { message: "Must be 0 or greater" }).nullable().optional(),
+        strikeRate: z.number().min(0, { message: "Must be 0 or greater" }).nullable().optional(),
+      }
+    : {
+        battingAverage: z.number().min(0, { message: "Must be 0 or greater" }),
+        strikeRate: z.number().min(0, { message: "Must be 0 or greater" }),
+      };
+
+  // Include bowling fields for Bowler and All-Rounder
+  if (role === "Bowler" || role === "All-Rounder") {
+    return z.object({ ...baseSchema, ...battingFields, ...bowlingFields });
+  }
+
+  // For Batsman and Wicket-Keeper
+  return z.object({ 
+    ...baseSchema, 
+    ...battingFields,
+    bowlingEconomy: z.number().min(0).nullable().optional(),
+    wickets: z.number().min(0).nullable().optional()
   });
 };
+
+// Define the form data type
+type PlayerFormData = z.infer<ReturnType<typeof createPlayerSchema>>;
 
 const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: PlayerFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRole, setSelectedRole] = useState<PlayerRole>(playerToEdit?.role || "Batsman");
   
-  const form = useForm<z.infer<typeof z.object({})>>({
-    resolver: zodResolver(createFormSchema(selectedRole)),
+  // Initialize form with schema and default values
+  const form = useForm<PlayerFormData>({
+    resolver: zodResolver(createPlayerSchema(selectedRole)),
     defaultValues: {
       name: playerToEdit?.name || "",
       role: playerToEdit?.role || "Batsman",
       overseas: playerToEdit?.overseas || "No",
-      battingAverage: playerToEdit?.battingAverage !== null ? playerToEdit?.battingAverage : 0,
-      strikeRate: playerToEdit?.strikeRate !== null ? playerToEdit?.strikeRate : 0,
-      bowlingEconomy: playerToEdit?.bowlingEconomy,
-      wickets: playerToEdit?.wickets,
-      catches: playerToEdit?.catches || 0,
+      battingAverage: playerToEdit?.battingAverage ?? 0,
+      strikeRate: playerToEdit?.strikeRate ?? 0,
+      bowlingEconomy: playerToEdit?.bowlingEconomy ?? null,
+      wickets: playerToEdit?.wickets ?? null,
+      catches: playerToEdit?.catches ?? 0,
     },
   });
 
-  // Update form validation schema when role changes
+  // Update form schema when role changes
   useEffect(() => {
     form.trigger(); // Re-validate with new schema
   }, [selectedRole, form]);
@@ -70,18 +93,8 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
   const showBowlingFields = role === "Bowler" || role === "All-Rounder";
   const isBowler = role === "Bowler";
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: PlayerFormData) => {
     setIsSubmitting(true);
-    
-    // For bowlers, set batting stats to defaults if they're empty
-    if (isBowler) {
-      if (data.battingAverage === undefined || data.battingAverage === null) {
-        data.battingAverage = 0;
-      }
-      if (data.strikeRate === undefined || data.strikeRate === null) {
-        data.strikeRate = 0;
-      }
-    }
     
     // Create player object with all required fields
     const playerData: Player = {
@@ -90,8 +103,8 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
       team: defaultTeam,
       role: data.role,
       overseas: data.overseas,
-      battingAverage: data.battingAverage,
-      strikeRate: data.strikeRate,
+      battingAverage: data.battingAverage ?? 0,
+      strikeRate: data.strikeRate ?? 0,
       bowlingEconomy: data.bowlingEconomy,
       wickets: data.wickets,
       catches: data.catches
@@ -159,6 +172,7 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                         setSelectedRole(value as PlayerRole);
                       }} 
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -186,6 +200,7 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                     <Select 
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -219,7 +234,6 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                       type="number" 
                       min="0" 
                       step="0.01" 
-                      {...field}
                       value={field.value === null ? "" : field.value}
                       onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value) || 0)}
                     />
@@ -243,7 +257,6 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                       type="number" 
                       min="0" 
                       step="0.01" 
-                      {...field}
                       value={field.value === null ? "" : field.value}
                       onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value) || 0)}
                     />
@@ -263,7 +276,7 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                     <Input 
                       type="number" 
                       min="0"
-                      {...field}
+                      value={field.value}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   </FormControl>
@@ -286,7 +299,6 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                         type="number" 
                         min="0" 
                         step="0.01" 
-                        {...field}
                         value={field.value === null ? "" : field.value}
                         onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
                       />
@@ -306,7 +318,6 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                       <Input 
                         type="number" 
                         min="0"
-                        {...field}
                         value={field.value === null ? "" : field.value}
                         onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
                       />
