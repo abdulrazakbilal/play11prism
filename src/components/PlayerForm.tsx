@@ -1,271 +1,299 @@
-import { useState, useEffect } from "react";
-import { Player, PlayerRole, OverseasStatus } from "../types/Player";
-import { useForm } from "react-hook-form";
-import { generateRandomId } from "../utils/playerUtils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { motion } from "framer-motion";
+
+import { z } from 'zod';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Player, PlayerRole, OverseasStatus } from '../types/Player';
+import { useTeam } from '../contexts/TeamContext';
 
 interface PlayerFormProps {
   onAddPlayer: (player: Player) => void;
   defaultTeam: string;
-  playerToEdit?: Player | null;
-  onCancelEdit?: () => void;
+  initialPlayer?: Player;
+  onCancel?: () => void;
 }
 
-// Define the form schema dynamically based on the player role
-const createPlayerSchema = (role: PlayerRole) => {
-  const baseSchema = {
-    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-    role: z.enum(["Batsman", "Bowler", "All-Rounder", "Wicket-Keeper"] as const),
-    overseas: z.enum(["Yes", "No"] as const),
-    catches: z.number().min(0, { message: "Must be 0 or greater" }),
-  };
-
-  // Optional bowling fields for Bowlers and All-Rounders
-  const bowlingFields = {
-    bowlingEconomy: z.number().min(0, { message: "Must be 0 or greater" }).nullable(),
-    wickets: z.number().min(0, { message: "Must be 0 or greater" }).nullable(),
-  };
-
-  // Batting fields mandatory for all except Bowlers
-  const battingFields = role === "Bowler"
-    ? {
-        battingAverage: z.number().min(0, { message: "Must be 0 or greater" }).nullable().optional(),
-        strikeRate: z.number().min(0, { message: "Must be 0 or greater" }).nullable().optional(),
-      }
-    : {
-        battingAverage: z.number().min(0, { message: "Must be 0 or greater" }),
-        strikeRate: z.number().min(0, { message: "Must be 0 or greater" }),
-      };
-
-  // Include bowling fields for Bowler and All-Rounder
-  if (role === "Bowler" || role === "All-Rounder") {
-    return z.object({ ...baseSchema, ...battingFields, ...bowlingFields });
-  }
-
-  // For Batsman and Wicket-Keeper
-  return z.object({ 
-    ...baseSchema, 
-    ...battingFields,
-    bowlingEconomy: z.number().min(0).nullable().optional(),
-    wickets: z.number().min(0).nullable().optional()
-  });
-};
-
-// Define the form data type
-type PlayerFormData = z.infer<ReturnType<typeof createPlayerSchema>>;
-
-const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: PlayerFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<PlayerRole>(playerToEdit?.role || "Batsman");
+const PlayerForm = ({ onAddPlayer, defaultTeam, initialPlayer, onCancel }: PlayerFormProps) => {
+  const { activeTeam } = useTeam();
+  const isLeagueFormat = activeTeam?.format === "league";
   
-  // Initialize form with schema and default values
-  const form = useForm<PlayerFormData>({
-    resolver: zodResolver(createPlayerSchema(selectedRole)),
-    defaultValues: {
-      name: playerToEdit?.name || "",
-      role: playerToEdit?.role || "Batsman",
-      overseas: playerToEdit?.overseas || "No",
-      battingAverage: playerToEdit?.battingAverage ?? 0,
-      strikeRate: playerToEdit?.strikeRate ?? 0,
-      bowlingEconomy: playerToEdit?.bowlingEconomy ?? null,
-      wickets: playerToEdit?.wickets ?? null,
-      catches: playerToEdit?.catches ?? 0,
-    },
+  // Create a dynamic schema based on the form values
+  const createPlayerSchema = () => {
+    return z.object({
+      id: z.number().optional(),
+      name: z.string().min(1, 'Name is required'),
+      team: z.string(),
+      role: z.enum(['Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper'] as const),
+      overseas: isLeagueFormat 
+        ? z.enum(['Yes', 'No'] as const)
+        : z.enum(['No'] as const).default('No'),
+      battingAverage: z.preprocess(
+        (val) => val === '' ? null : Number(val),
+        z.number().min(0).nullish()
+          .superRefine((val, ctx) => {
+            if ((formValues?.role === 'Batsman' || formValues?.role === 'All-Rounder' || formValues?.role === 'Wicket-Keeper') && (val === null || val === undefined)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Batting average is required for this role',
+              });
+            }
+          }),
+      ),
+      strikeRate: z.preprocess(
+        (val) => val === '' ? null : Number(val),
+        z.number().min(0).nullish()
+          .superRefine((val, ctx) => {
+            if ((formValues?.role === 'Batsman' || formValues?.role === 'All-Rounder' || formValues?.role === 'Wicket-Keeper') && (val === null || val === undefined)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Strike rate is required for this role',
+              });
+            }
+          }),
+      ),
+      bowlingEconomy: z.preprocess(
+        (val) => val === '' ? null : Number(val),
+        z.number().min(0).nullish()
+          .superRefine((val, ctx) => {
+            if ((formValues?.role === 'Bowler' || formValues?.role === 'All-Rounder') && (val === null || val === undefined)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Bowling economy is required for this role',
+              });
+            }
+          }),
+      ),
+      wickets: z.preprocess(
+        (val) => val === '' ? null : Number(val),
+        z.number().min(0).nullish()
+          .superRefine((val, ctx) => {
+            if ((formValues?.role === 'Bowler' || formValues?.role === 'All-Rounder') && (val === null || val === undefined)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Wickets are required for this role',
+              });
+            }
+          }),
+      ),
+      catches: z.preprocess(
+        (val) => val === '' ? null : Number(val),
+        z.number().min(0, 'Catches must be a positive number')
+      ),
+    });
+  };
+
+  const defaultValues = initialPlayer || {
+    id: Date.now(),
+    name: '',
+    team: defaultTeam,
+    role: 'Batsman' as PlayerRole,
+    overseas: isLeagueFormat ? 'No' as OverseasStatus : 'No' as OverseasStatus,
+    battingAverage: null,
+    strikeRate: null,
+    bowlingEconomy: null,
+    wickets: null,
+    catches: 0,
+  };
+
+  const form = useForm<z.infer<ReturnType<typeof createPlayerSchema>>>({
+    resolver: zodResolver(createPlayerSchema()),
+    defaultValues,
   });
 
-  // Update form schema when role changes
-  useEffect(() => {
-    form.trigger(); // Re-validate with new schema
-  }, [selectedRole, form]);
+  const formValues = form.watch();
 
-  // Watch for role changes
-  const role = form.watch("role");
-  useEffect(() => {
-    setSelectedRole(role as PlayerRole);
-  }, [role]);
-
-  const showBowlingFields = role === "Bowler" || role === "All-Rounder";
-  const isBowler = role === "Bowler";
-
-  const onSubmit = (data: PlayerFormData) => {
-    setIsSubmitting(true);
-    
-    // Create player object with all required fields
-    const playerData: Player = {
-      id: playerToEdit?.id || generateRandomId(),
+  const onSubmit = (data: z.infer<ReturnType<typeof createPlayerSchema>>) => {
+    // Ensure all required fields are provided based on role
+    const newPlayer: Player = {
+      id: data.id || Date.now(),
       name: data.name,
-      team: defaultTeam,
+      team: data.team,
       role: data.role,
-      overseas: data.overseas,
-      battingAverage: data.battingAverage ?? 0,
-      strikeRate: data.strikeRate ?? 0,
+      overseas: isLeagueFormat ? data.overseas : 'No',
+      battingAverage: data.battingAverage || 0,
+      strikeRate: data.strikeRate || 0,
       bowlingEconomy: data.bowlingEconomy,
       wickets: data.wickets,
-      catches: data.catches
+      catches: data.catches || 0,
     };
-    
-    onAddPlayer(playerData);
-    
-    // Reset form if not editing
-    if (!playerToEdit) {
-      form.reset({
-        name: "",
-        role: "Batsman",
-        overseas: "No",
-        battingAverage: 0,
-        strikeRate: 0,
-        bowlingEconomy: null,
-        wickets: null,
-        catches: 0,
-      });
-    } else if (onCancelEdit) {
-      onCancelEdit();
-    }
-    
-    setIsSubmitting(false);
+
+    onAddPlayer(newPlayer);
+    form.reset();
   };
 
+  const isBattingRequired = formValues?.role === 'Batsman' || formValues?.role === 'All-Rounder' || formValues?.role === 'Wicket-Keeper';
+  const isBowlingRequired = formValues?.role === 'Bowler' || formValues?.role === 'All-Rounder';
+
   return (
-    <motion.div 
-      className="subtle-card p-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h2 className="text-2xl font-semibold mb-6">
-        {playerToEdit ? `Edit ${playerToEdit.name}` : `Add Player to ${defaultTeam}`}
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 border border-slate-200 dark:border-slate-700">
+      <h2 className="text-xl font-semibold mb-6">
+        {initialPlayer ? 'Edit Player' : 'Add Player'}
       </h2>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Name Field */}
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Virat Kohli" {...field} />
+                    <Input placeholder="Player name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedRole(value as PlayerRole);
-                      }} 
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Batsman">Batsman</SelectItem>
-                        <SelectItem value="Bowler">Bowler</SelectItem>
-                        <SelectItem value="All-Rounder">All-Rounder</SelectItem>
-                        <SelectItem value="Wicket-Keeper">Wicket-Keeper</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
+
+            {/* Role Field */}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Batsman">Batsman</SelectItem>
+                      <SelectItem value="Bowler">Bowler</SelectItem>
+                      <SelectItem value="All-Rounder">All-Rounder</SelectItem>
+                      <SelectItem value="Wicket-Keeper">Wicket-Keeper</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Overseas Field - only show for league format */}
+            {isLeagueFormat && (
               <FormField
                 control={form.control}
                 name="overseas"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Overseas Player</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Is overseas?" />
+                          <SelectValue placeholder="Overseas status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="No">No</SelectItem>
                         <SelectItem value="Yes">Yes</SelectItem>
+                        <SelectItem value="No">No</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            )}
+
+            {/* Batting Average Field */}
             <FormField
               control={form.control}
               name="battingAverage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Batting Average
-                    {isBowler && <span className="text-xs text-slate-500 ml-1">(Optional)</span>}
+                  <FormLabel className={isBattingRequired ? "font-medium" : "font-normal text-muted-foreground"}>
+                    Batting Average{isBattingRequired ? "*" : " (Optional)"}
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      step="0.01" 
-                      value={field.value === null ? "" : field.value}
-                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value) || 0)}
+                    <Input
+                      type="number"
+                      placeholder={isBattingRequired ? "Required" : "Optional"}
+                      {...field}
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
+            {/* Strike Rate Field */}
             <FormField
               control={form.control}
               name="strikeRate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Strike Rate
-                    {isBowler && <span className="text-xs text-slate-500 ml-1">(Optional)</span>}
+                  <FormLabel className={isBattingRequired ? "font-medium" : "font-normal text-muted-foreground"}>
+                    Strike Rate{isBattingRequired ? "*" : " (Optional)"}
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      step="0.01" 
-                      value={field.value === null ? "" : field.value}
-                      onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value) || 0)}
+                    <Input
+                      type="number"
+                      placeholder={isBattingRequired ? "Required" : "Optional"}
+                      {...field}
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
+            {/* Bowling Economy Field */}
+            <FormField
+              control={form.control}
+              name="bowlingEconomy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={isBowlingRequired ? "font-medium" : "font-normal text-muted-foreground"}>
+                    Bowling Economy{isBowlingRequired ? "*" : " (Optional)"}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder={isBowlingRequired ? "Required" : "Optional"}
+                      {...field}
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Wickets Field */}
+            <FormField
+              control={form.control}
+              name="wickets"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className={isBowlingRequired ? "font-medium" : "font-normal text-muted-foreground"}>
+                    Wickets{isBowlingRequired ? "*" : " (Optional)"}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder={isBowlingRequired ? "Required" : "Optional"}
+                      {...field}
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Catches Field */}
             <FormField
               control={form.control}
               name="catches"
@@ -273,11 +301,12 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
                 <FormItem>
                   <FormLabel>Catches</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0"
-                      value={field.value}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    <Input
+                      type="number"
+                      placeholder="Number of catches"
+                      {...field}
+                      value={field.value === null ? '0' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -285,72 +314,20 @@ const PlayerForm = ({ onAddPlayer, defaultTeam, playerToEdit, onCancelEdit }: Pl
               )}
             />
           </div>
-          
-          {showBowlingFields && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="bowlingEconomy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bowling Economy</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        step="0.01" 
-                        value={field.value === null ? "" : field.value}
-                        onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="wickets"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Wickets</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0"
-                        value={field.value === null ? "" : field.value}
-                        onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
-          
-          <div className="flex gap-3">
-            <Button 
-              type="submit" 
-              className="bg-cricket-blue hover:bg-blue-700"
-              disabled={isSubmitting}
-            >
-              {playerToEdit ? "Update Player" : "Add Player"}
-            </Button>
-            
-            {playerToEdit && onCancelEdit && (
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={onCancelEdit}
-              >
+
+          <div className="flex justify-end gap-3">
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
             )}
+            <Button type="submit" className="bg-cricket-blue hover:bg-blue-700">
+              {initialPlayer ? 'Update Player' : 'Add Player'}
+            </Button>
           </div>
         </form>
       </Form>
-    </motion.div>
+    </div>
   );
 };
 

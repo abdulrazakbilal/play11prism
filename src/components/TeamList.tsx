@@ -1,19 +1,20 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTeam, Team } from "../contexts/TeamContext";
+import { useTeam, Team, TeamFormat } from "../contexts/TeamContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Edit, Trash2, PlusCircle, Users, Calendar } from "lucide-react";
+import { Edit, Trash2, PlusCircle, Users, Calendar, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import TeamFormatSelector from "./TeamFormatSelector";
 
 const TeamList = () => {
   const { teams, addTeam, deleteTeam, updateTeam, setActiveTeam } = useTeam();
   const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamFormat, setNewTeamFormat] = useState<TeamFormat>("league");
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [editTeamName, setEditTeamName] = useState("");
   const [showNewTeamDialog, setShowNewTeamDialog] = useState(false);
@@ -33,8 +34,9 @@ const TeamList = () => {
       return;
     }
     
-    const team = addTeam(newTeamName);
+    const team = addTeam(newTeamName, newTeamFormat);
     setNewTeamName("");
+    setNewTeamFormat("league");
     setShowNewTeamDialog(false);
     
     toast({
@@ -135,6 +137,10 @@ const TeamList = () => {
                   }}
                 />
               </div>
+              <TeamFormatSelector 
+                value={newTeamFormat} 
+                onChange={setNewTeamFormat} 
+              />
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -171,7 +177,20 @@ const TeamList = () => {
             <motion.div key={team.id} variants={item}>
               <Card className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <CardTitle>{team.name}</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    {team.name}
+                    {team.format === "league" ? (
+                      <span className="text-xs py-1 px-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full flex items-center gap-1">
+                        <Globe size={12} />
+                        League
+                      </span>
+                    ) : (
+                      <span className="text-xs py-1 px-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full flex items-center gap-1">
+                        <Users size={12} />
+                        Normal
+                      </span>
+                    )}
+                  </CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <Users size={14} />
                     {team.players.length} players

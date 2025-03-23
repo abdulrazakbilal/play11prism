@@ -1,10 +1,12 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Player } from '../types/Player';
+
+export type TeamFormat = "league" | "normal";
 
 export interface Team {
   id: string;
   name: string;
+  format: TeamFormat;
   players: Player[];
   createdAt: Date;
 }
@@ -13,7 +15,7 @@ interface TeamContextType {
   teams: Team[];
   activeTeam: Team | null;
   setActiveTeam: (team: Team | null) => void;
-  addTeam: (name: string) => Team;
+  addTeam: (name: string, format: TeamFormat) => Team;
   updateTeam: (teamId: string, updatedTeam: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
   addPlayerToTeam: (teamId: string, player: Player) => void;
@@ -50,10 +52,11 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('teams', JSON.stringify(teams));
   }, [teams]);
 
-  const addTeam = (name: string): Team => {
+  const addTeam = (name: string, format: TeamFormat = "league"): Team => {
     const newTeam: Team = {
       id: Date.now().toString(),
       name,
+      format,
       players: [],
       createdAt: new Date()
     };
