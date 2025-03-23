@@ -50,10 +50,18 @@ const PlayerForm = ({ onAddPlayer, defaultTeam }: PlayerFormProps) => {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     
+    // Fix: Ensure all properties are non-optional by explicitly adding them
     const newPlayer: Player = {
       id: generateRandomId(),
+      name: data.name,
       team: defaultTeam,
-      ...data,
+      role: data.role,
+      overseas: data.overseas,
+      battingAverage: data.battingAverage,
+      strikeRate: data.strikeRate,
+      bowlingEconomy: data.bowlingEconomy,
+      wickets: data.wickets,
+      catches: data.catches
     };
     
     onAddPlayer(newPlayer);
