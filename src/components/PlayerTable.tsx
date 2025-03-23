@@ -105,8 +105,8 @@ const PlayerTable = ({ players, onRemovePlayer, onUpdatePlayer }: PlayerTablePro
       <PlayerForm
         onAddPlayer={handleUpdatePlayer}
         defaultTeam={editingPlayer.team}
-        playerToEdit={editingPlayer}
-        onCancelEdit={handleCancelEdit}
+        initialPlayer={editingPlayer}
+        onCancel={handleCancelEdit}
       />
     );
   }
