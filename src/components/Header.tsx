@@ -20,10 +20,18 @@ const Header = () => {
               className="mb-4"
             >
               <img 
-                src="/lovable-uploads/6fe60d0a-5cfc-4f6e-a8e0-84241bfce6c1.png" 
+                src="/lovable-uploads/73223a4b-fe7e-48fe-a149-750ab81a9f01.png" 
                 alt="Play11 Prism Logo" 
                 className="h-32 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
               />
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-slate-600 dark:text-slate-300 text-lg font-medium italic"
+              >
+                Optimized Cricket Lineups, Perfected.
+              </motion.p>
             </motion.div>
           </Link>
         </div>

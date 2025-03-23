@@ -17,6 +17,7 @@ interface TeamContextType {
   updateTeam: (teamId: string, updatedTeam: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
   addPlayerToTeam: (teamId: string, player: Player) => void;
+  updatePlayerInTeam: (teamId: string, updatedPlayer: Player) => void;
   removePlayerFromTeam: (teamId: string, playerId: number) => void;
 }
 
@@ -108,6 +109,35 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updatePlayerInTeam = (teamId: string, updatedPlayer: Player) => {
+    setTeams(prevTeams => 
+      prevTeams.map(team => {
+        if (team.id === teamId) {
+          return {
+            ...team,
+            players: team.players.map(player => 
+              player.id === updatedPlayer.id ? { ...updatedPlayer, team: team.name } : player
+            )
+          };
+        }
+        return team;
+      })
+    );
+    
+    // Also update activeTeam if it's the team being modified
+    if (activeTeam?.id === teamId) {
+      setActiveTeam(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          players: prev.players.map(player => 
+            player.id === updatedPlayer.id ? { ...updatedPlayer, team: prev.name } : player
+          )
+        };
+      });
+    }
+  };
+
   const removePlayerFromTeam = (teamId: string, playerId: number) => {
     setTeams(prevTeams => 
       prevTeams.map(team => {
@@ -142,6 +172,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateTeam,
       deleteTeam,
       addPlayerToTeam,
+      updatePlayerInTeam,
       removePlayerFromTeam
     }}>
       {children}

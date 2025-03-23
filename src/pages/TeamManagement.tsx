@@ -18,7 +18,7 @@ import { Link } from "react-router-dom";
 
 const TeamManagement = () => {
   const { teamId } = useParams();
-  const { teams, activeTeam, setActiveTeam, addPlayerToTeam, removePlayerFromTeam } = useTeam();
+  const { teams, activeTeam, setActiveTeam, addPlayerToTeam, removePlayerFromTeam, updatePlayerInTeam } = useTeam();
   const [optimizedTeam, setOptimizedTeam] = useState<{ selectedPlayers: Player[]; totalScore: number, teamName: string }>({
     selectedPlayers: [],
     totalScore: 0,
@@ -53,13 +53,35 @@ const TeamManagement = () => {
     addPlayerToTeam(activeTeam.id, {
       ...player,
       team: activeTeam.name,
-      id: Date.now() // Ensure unique ID
+      id: player.id || Date.now() // Ensure unique ID
     });
     
     toast({
       title: "Player added",
       description: `${player.name} has been added to ${activeTeam.name}.`,
     });
+  };
+  
+  // Update a player in the squad
+  const handleUpdatePlayer = (updatedPlayer: Player) => {
+    if (!activeTeam) return;
+    
+    updatePlayerInTeam(activeTeam.id, updatedPlayer);
+    
+    toast({
+      title: "Player updated",
+      description: `${updatedPlayer.name} has been updated.`,
+    });
+    
+    // Also update in optimized team if present
+    if (optimizedTeam.selectedPlayers.some(p => p.id === updatedPlayer.id)) {
+      setOptimizedTeam(prev => ({
+        ...prev,
+        selectedPlayers: prev.selectedPlayers.map(p => 
+          p.id === updatedPlayer.id ? updatedPlayer : p
+        )
+      }));
+    }
   };
   
   // Remove a player from the squad
@@ -181,6 +203,7 @@ const TeamManagement = () => {
                 <PlayerTable 
                   players={activeTeam.players} 
                   onRemovePlayer={handleRemovePlayer} 
+                  onUpdatePlayer={handleUpdatePlayer}
                 />
               </div>
             </AnimatePresence>

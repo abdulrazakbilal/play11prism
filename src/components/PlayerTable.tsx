@@ -12,15 +12,18 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { motion } from "framer-motion";
-import { Trash2, Filter, Download, UserRoundX } from "lucide-react";
+import { Trash2, Filter, Download, UserRoundX, Pencil } from "lucide-react";
+import PlayerForm from "./PlayerForm";
 
 interface PlayerTableProps {
   players: Player[];
   onRemovePlayer: (id: number) => void;
+  onUpdatePlayer: (player: Player) => void;
 }
 
-const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
+const PlayerTable = ({ players, onRemovePlayer, onUpdatePlayer }: PlayerTableProps) => {
   const [filter, setFilter] = useState<string>("all");
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   
   // Calculate composite scores dynamically
   const playersWithScores = players.map(player => ({
@@ -82,6 +85,31 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleEditPlayer = (player: Player) => {
+    setEditingPlayer(player);
+  };
+  
+  const handleUpdatePlayer = (updatedPlayer: Player) => {
+    onUpdatePlayer(updatedPlayer);
+    setEditingPlayer(null);
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingPlayer(null);
+  };
+  
+  // If a player is being edited, show the edit form
+  if (editingPlayer) {
+    return (
+      <PlayerForm
+        onAddPlayer={handleUpdatePlayer}
+        defaultTeam={editingPlayer.team}
+        playerToEdit={editingPlayer}
+        onCancelEdit={handleCancelEdit}
+      />
+    );
+  }
   
   return (
     <motion.div 
@@ -185,7 +213,7 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
                 <TableHead>Wickets</TableHead>
                 <TableHead>Catches</TableHead>
                 <TableHead className="text-right">Score</TableHead>
-                <TableHead className="w-[60px]"></TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -215,15 +243,26 @@ const PlayerTable = ({ players, onRemovePlayer }: PlayerTableProps) => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onRemovePlayer(player.id)}
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                    >
-                      <Trash2 size={16} />
-                      <span className="sr-only">Remove</span>
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditPlayer(player)}
+                        className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                      >
+                        <Pencil size={16} />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onRemovePlayer(player.id)}
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      >
+                        <Trash2 size={16} />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
